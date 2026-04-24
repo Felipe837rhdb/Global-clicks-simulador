@@ -13,59 +13,59 @@
             --diretor: linear-gradient(90deg, #ff004c, #7000ff);
         }
 
-        /* Bloqueio de Zoom e Fixação */
+        
         html, body { touch-action: none; overflow: hidden; height: 100vh; width: 100vw; position: fixed; margin: 0; background: var(--bg); color: var(--text); }
         * { box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; user-select: none; transition: all 0.25s ease; }
 
-        /* Background Dinâmico */
+        
         #bg-canvas { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at center, #111 0%, #000 100%); }
 
-        /* Tela de Banimento */
+        /
         #ban-overlay {
             position: fixed; inset: 0; background: #000; z-index: 999999;
             display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center;
         }
 
-        /* UI Framework */
+        
         .glass { background: var(--card); border: 1px solid var(--border); border-radius: 24px; backdrop-filter: blur(15px); box-shadow: 0 15px 35px rgba(0,0,0,0.8); }
         .container { display: none; height: 100vh; padding: 20px; flex-direction: column; gap: 15px; overflow-y: auto; padding-bottom: 60px; }
         
-        /* Grid Layout */
+        /
         .main-layout { display: grid; grid-template-columns: 320px 1fr 320px; gap: 15px; width: 100%; max-width: 1600px; margin: 0 auto; }
         @media (max-width: 1200px) { .main-layout { grid-template-columns: 1fr; } }
 
-        /* Chat System */
+        /* 
         #chat-box { height: 350px; display: flex; flex-direction: column; gap: 8px; }
         #messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 5px; }
         .msg { padding: 6px 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border-left: 3px solid var(--primary); }
         .msg-staff { border-left-color: var(--admin); background: rgba(255, 0, 76, 0.1); }
 
-        /* Admin */
+        
         #admin-panel { display: none; animation: slideIn 0.4s ease; margin-bottom: 15px; }
         .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
         .admin-sec { padding: 15px; border-top: 3px solid var(--admin); }
         .staff-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: var(--diretor); color: white; font-weight: 900; margin-right: 5px; }
 
-        /* Gameplay */
+        
         #big-button { 
             width: 240px; height: 240px; border-radius: 50%; background: var(--gold); border: 12px solid rgba(255,255,255,0.1);
             font-size: 2.2rem; font-weight: 900; cursor: pointer; box-shadow: 0 0 60px rgba(255, 215, 0, 0.3);
         }
         #big-button:active { transform: scale(0.92); filter: brightness(1.2); }
 
-        /* Rodapé de Copyright */
+        
         .footer-credits { 
             position: fixed; bottom: 15px; width: 100%; text-align: center; 
             font-size: 0.7rem; opacity: 0.5; letter-spacing: 2px; pointer-events: none;
         }
 
-        /* Forms */
+        
         input { background: #000; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 10px; width: 100%; font-size: 0.8rem; margin-bottom: 5px; }
         .btn { padding: 10px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.7rem; }
         .btn-p { background: var(--primary); color: #000; }
         .btn-adm { background: var(--admin); color: #fff; }
 
-        /* FX */
+        
         .aura-nick { background: linear-gradient(90deg, #fff, #ffd700, #ff004c, #fff); background-size: 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: aura 2s linear infinite; font-weight: 900; }
         @keyframes aura { 0% { background-position: 0%; } 100% { background-position: 200%; } }
         @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
