@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Clicks Supremos - Cosmic Empire</title>
+    <style>
+        :root {
+            --primary: #ffcc00; --bg: #020204; --card: rgba(12, 12, 18, 0.96);
+            --border: rgba(255, 255, 255, 0.08); --text: #ffffff; --admin: #ff004c;
+            --danger: #ff2e2e; --purple: #9d50bb; --success: #00ff88;
+            --gold: linear-gradient(135deg, #ffd700, #ffae00);
+            --diretor: linear-gradient(90deg, #ff004c, #7000ff);
+        }
+
+        /* Bloqueio de Zoom e Fixação */
+        html, body { touch-action: none; overflow: hidden; height: 100vh; width: 100vw; position: fixed; margin: 0; background: var(--bg); color: var(--text); }
+        * { box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; user-select: none; transition: all 0.25s ease; }
+
+        /* Background Dinâmico */
+        #bg-canvas { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at center, #111 0%, #000 100%); }
+
+        /* Tela de Banimento */
+        #ban-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 999999;
+            display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+        }
+
+        /* UI Framework */
+        .glass { background: var(--card); border: 1px solid var(--border); border-radius: 24px; backdrop-filter: blur(15px); box-shadow: 0 15px 35px rgba(0,0,0,0.8); }
+        .container { display: none; height: 100vh; padding: 20px; flex-direction: column; gap: 15px; overflow-y: auto; padding-bottom: 60px; }
+        
+        /* Grid Layout */
+        .main-layout { display: grid; grid-template-columns: 320px 1fr 320px; gap: 15px; width: 100%; max-width: 1600px; margin: 0 auto; }
+        @media (max-width: 1200px) { .main-layout { grid-template-columns: 1fr; } }
+
+        /* Chat System */
+        #chat-box { height: 350px; display: flex; flex-direction: column; gap: 8px; }
+        #messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 0.85rem; display: flex; flex-direction: column; gap: 5px; }
+        .msg { padding: 6px 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border-left: 3px solid var(--primary); }
+        .msg-staff { border-left-color: var(--admin); background: rgba(255, 0, 76, 0.1); }
+
+        /* Admin */
+        #admin-panel { display: none; animation: slideIn 0.4s ease; margin-bottom: 15px; }
+        .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+        .admin-sec { padding: 15px; border-top: 3px solid var(--admin); }
+        .staff-tag { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: var(--diretor); color: white; font-weight: 900; margin-right: 5px; }
+
+        /* Gameplay */
+        #big-button { 
+            width: 240px; height: 240px; border-radius: 50%; background: var(--gold); border: 12px solid rgba(255,255,255,0.1);
+            font-size: 2.2rem; font-weight: 900; cursor: pointer; box-shadow: 0 0 60px rgba(255, 215, 0, 0.3);
+        }
+        #big-button:active { transform: scale(0.92); filter: brightness(1.2); }
+
+        /* Rodapé de Copyright */
+        .footer-credits { 
+            position: fixed; bottom: 15px; width: 100%; text-align: center; 
+            font-size: 0.7rem; opacity: 0.5; letter-spacing: 2px; pointer-events: none;
+        }
+
+        /* Forms */
+        input { background: #000; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 10px; width: 100%; font-size: 0.8rem; margin-bottom: 5px; }
+        .btn { padding: 10px; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; font-size: 0.7rem; }
+        .btn-p { background: var(--primary); color: #000; }
+        .btn-adm { background: var(--admin); color: #fff; }
+
+        /* FX */
+        .aura-nick { background: linear-gradient(90deg, #fff, #ffd700, #ff004c, #fff); background-size: 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: aura 2s linear infinite; font-weight: 900; }
+        @keyframes aura { 0% { background-position: 0%; } 100% { background-position: 200%; } }
+        @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        #custom-alert { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-200%); z-index: 99999; padding: 15px 30px; border-radius: 15px; font-weight: 900; border: 2px solid var(--primary); background: #000; }
+        #custom-alert.show { transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+    <div id="custom-alert"></div>
+    <audio id="bg-music" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" type="audio/mpeg"></audio>
+
+    <div id="ban-overlay">
+        <h1 style="color: var(--admin); font-size: 3rem; margin: 0;">ACESSO NEGADO</h1>
+        <p style="opacity: 0.7;">A tua conta está suspensa temporariamente.</p>
+        <div id="ban-timer" style="font-size: 2.5rem; color: var(--primary); margin: 20px 0; font-weight: 900;">00:00:00</div>
+        <button class="btn btn-p" onclick="sair()">VOLTAR AO INÍCIO</button>
+    </div>
+
+    <div id="login-screen" style="position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center; background: var(--bg);">
+        <div class="glass" style="width: 360px; padding: 40px; text-align: center;">
+            <h1 style="color: var(--primary); letter-spacing: 5px; margin-bottom: 30px;">CLICKS SUPREMOS</h1>
+            <input type="text" id="user-id" placeholder="NOME DE USUÁRIO">
+            <input type="password" id="user-pass" placeholder="PALAVRA-PASSE" style="margin-top: 10px;">
+            <button class="btn btn-p" style="width: 100%; margin-top: 25px; height: 50px;" onclick="autenticar()">INICIAR SESSÃO</button>
+            <p style="font-size: 0.5rem; margin-top: 20px; opacity: 0.4;">© xCosmico - Todos os direitos reservados</p>
+        </div>
+    </div>
+
+    <div class="container" id="main-ui">
+        
+        <div class="glass" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 30px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="staff-badge" style="display:none" class="staff-tag">DIRETOR</span>
+                <span id="player-nick" class="aura-nick" style="font-size: 1.2rem;">---</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-p" id="music-btn" onclick="toggleMusic()">🔈 OFF</button>
+                <button class="btn btn-adm" style="display:none" id="adm-toggle" onclick="document.getElementById('admin-panel').style.display='block'">PAINEL ADMIN</button>
+                <button class="btn btn-adm" style="background:transparent; border:1px solid var(--danger)" onclick="sair()">SAIR</button>
+            </div>
+        </div>
+
+        <div id="admin-panel" class="glass admin-sec">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px">
+                <b style="color:var(--admin)">CONTROLO SUPREMO</b>
+                <button onclick="this.parentElement.parentElement.style.display='none'" style="background:none; border:none; color:#fff; cursor:pointer">✖</button>
+            </div>
+            <div class="admin-grid">
+                <div class="glass admin-sec">
+                    <small>ECONOMIA (PRECISÃO)</small>
+                    <input type="text" id="adm-target" placeholder="Nick do Jogador">
+                    <input type="number" id="adm-value" placeholder="Quantidade exata">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px">
+                        <button class="btn btn-p" onclick="admEconomy('add-click')">+ CLICKS</button>
+                        <button class="btn btn-adm" onclick="admEconomy('rem-click')">- CLICKS</button>
+                        <button class="btn btn-p" style="background:var(--purple); color:#fff" onclick="admEconomy('add-reb')">+ REBIRTH</button>
+                        <button class="btn btn-adm" style="background:var(--danger)" onclick="admEconomy('rem-reb')">- REBIRTH</button>
+                    </div>
+                </div>
+                <div class="glass admin-sec" style="border-top-color: var(--success)">
+                    <small>STATUS E BANIMENTO</small>
+                    <input type="text" id="adm-target-alt" placeholder="Nick do Jogador">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px">
+                        <button class="btn btn-p" style="background:var(--success); color:#000" onclick="admStatus('aura')">DAR AURA</button>
+                        <button class="btn btn-adm" style="background:var(--danger)" onclick="admStatus('ban')">BANIR 24H</button>
+                        <button class="btn btn-p" onclick="start2X()">FORÇAR 2X</button>
+                        <button class="btn btn-adm" onclick="clearChat()">LIMPAR CHAT</button>
+                    </div>
+                </div>
+                <div class="glass admin-sec" style="border-top-color: var(--purple)">
+                    <small>EQUIPA STAFF</small>
+                    <div id="staff-list" style="font-size:0.7rem; max-height:60px; overflow-y:auto; margin-bottom: 5px;"></div>
+                    <input type="text" id="new-staff" placeholder="Novo Diretor">
+                    <button class="btn btn-p" style="width:100%; background:var(--diretor); color:#fff" onclick="addStaff()">PROMOVER</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <div class="glass" id="chat-box" style="padding: 15px;">
+                <b style="color: var(--primary); font-size: 0.8rem; display: block; margin-bottom: 10px;">CHAT GLOBAL</b>
+                <div id="messages"></div>
+                <div style="display: flex; gap: 5px; margin-top: 10px;">
+                    <input type="text" id="chat-input" placeholder="Mensagem...">
+                    <button class="btn btn-p" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+
+            <div class="glass" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 40px;">
+                <div id="event-tag" style="display:none; background:var(--success); color:#000; padding:5px 20px; border-radius:50px; font-weight:900;">BÓNUS 2X ATIVO</div>
+                <div style="text-align: center;">
+                    <span style="font-size: 5.5rem; font-weight: 900; color: var(--primary);" id="ui-clicks">0</span>
+                    <div id="ui-mult" style="color: var(--purple); font-weight: 900; font-size: 1.5rem;">MULTI: x1</div>
+                </div>
+                <button id="big-button" onclick="clicker()">CLICK!</button>
+                <div class="glass" style="width:100%; padding:15px; text-align:center">
+                    <small style="opacity:0.6">REBIRTHS</small>
+                    <div id="ui-rebirth" style="font-size:1.8rem; font-weight:900; color:var(--purple)">0</div>
+                    <button class="btn btn-p" style="width:100%; background:var(--purple); color:#fff; margin-top: 5px;" onclick="rebirth()">EVOLUIR (5K)</button>
+                </div>
+            </div>
+
+            <div class="glass" style="padding: 15px;">
+                <b style="color: var(--primary); font-size: 0.8rem; display: block; margin-bottom: 15px;">RANKING SUPREMO</b>
+                <div id="ranking" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+        </div>
+        
+        <div class="footer-credits">© xCosmico - TODOS OS DIREITOS RESERVADOS</div>
+    </div>
+
+    <script>
+        let user = null;
+        let accounts = JSON.parse(localStorage.getItem('pxW_DB')) || [];
+        let chat = JSON.parse(localStorage.getItem('pxW_Chat')) || [];
+        let global = JSON.parse(localStorage.getItem('pxW_Global')) || { eventEnd: 0, directors: ['xcosmico'] };
+        let eventActive = false;
+
+        document.addEventListener('touchstart', (e) => { if(e.touches.length > 1) e.preventDefault(); }, {passive: false});
+
+        window.onload = () => {
+            renderParticles();
+            checkEvent();
+            const sess = localStorage.getItem('pxW_Sess');
+            if(sess) {
+                const acc = accounts.find(a => a.id.toLowerCase() === sess.toLowerCase());
+                if(acc) {
+                    if(acc.isBanned && Date.now() < acc.isBanned) return showBan(acc);
+                    logar(acc);
+                }
+            }
+        };
+
+        function autenticar() {
+            const id = document.getElementById('user-id').value.trim();
+            const ps = document.getElementById('user-pass').value;
+            if(!id || !ps) return alertar("DADOS INVÁLIDOS!");
+            
+            let acc = accounts.find(a => a.id.toLowerCase() === id.toLowerCase());
+            if(!acc) {
+                acc = { id, pass: ps, clicks: 0, rebirths: 0, hasAura: (id.toLowerCase() === 'xcosmico'), isBanned: 0 };
+                accounts.push(acc);
+            } else if(acc.pass !== ps) return alertar("CHAVE ERRADA!");
+            
+            if(acc.isBanned && Date.now() < acc.isBanned) return showBan(acc);
+
+            localStorage.setItem('pxW_Sess', acc.id);
+            logar(acc);
+        }
+
+        function showBan(acc) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('ban-overlay').style.display = 'flex';
+            const timer = setInterval(() => {
+                const rem = acc.isBanned - Date.now();
+                if(rem <= 0) { clearInterval(timer); location.reload(); }
+                const h = Math.floor(rem/3600000), m = Math.floor((rem%3600000)/60000), s = Math.floor((rem%60000)/1000);
+                document.getElementById('ban-timer').innerText = `${h}h ${m}m ${s}s`;
+            }, 1000);
+        }
+
+        function logar(acc) {
+            user = acc;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-ui').style.display = 'flex';
+            document.getElementById('player-nick').innerText = user.id.toUpperCase();
+            
+            if(global.directors.includes(user.id.toLowerCase())) {
+                document.getElementById('adm-toggle').style.display = 'block';
+                document.getElementById('staff-badge').style.display = 'block';
+            }
+            updateUI();
+            setInterval(updateChat, 2000);
+            updateChat();
+        }
+
+        function clicker() {
+            const gain = (user.rebirths + 1) * (eventActive ? 2 : 1);
+            user.clicks += gain;
+            updateUI();
+            save();
+        }
+
+        function rebirth() {
+            if(user.clicks >= 5000) {
+                user.clicks = 0;
+                user.rebirths++;
+                alertar("REBIRTH FEITO!");
+                updateUI(); save();
+            } else alertar("FALTAM CLIQUES!");
+        }
+
+        function updateUI() {
+            document.getElementById('ui-clicks').innerText = Math.floor(user.clicks).toLocaleString();
+            document.getElementById('ui-rebirth').innerText = user.rebirths;
+            document.getElementById('ui-mult').innerText = `MULTI: x${(user.rebirths+1)*(eventActive?2:1)}`;
+            
+            const rankDiv = document.getElementById('ranking');
+            rankDiv.innerHTML = "";
+            // Ranking Filtrado (Sem Banidos)
+            accounts.filter(a => !a.isBanned || Date.now() > a.isBanned)
+            .sort((a,b) => b.clicks - a.clicks).slice(0, 10).forEach((p, i) => {
+                const isDir = global.directors.includes(p.id.toLowerCase());
+                rankDiv.innerHTML += `
+                    <div class="glass" style="padding:10px; display:flex; justify-content:space-between; align-items:center; border-color:${isDir?'var(--admin)':'var(--border)'}">
+                        <div style="font-size:0.8rem">
+                            ${isDir?'<span class="staff-tag">DIR</span>':''}
+                            <span class="${p.hasAura?'aura-nick':''}">${p.id}</span>
+                        </div>
+                        <div style="text-align:right">
+                            <div style="color:var(--primary); font-weight:900">${Math.floor(p.clicks).toLocaleString()}</div>
+                            <small style="font-size:0.6rem; color:var(--purple)">x${p.rebirths+1}</small>
+                        </div>
+                    </div>`;
+            });
+
+            const sl = document.getElementById('staff-list');
+            sl.innerHTML = global.directors.map(d => `<div style="color:var(--success)">• ${d.toUpperCase()}</div>`).join('');
+        }
+
+        function admEconomy(type) {
+            const nick = document.getElementById('adm-target').value.trim().toLowerCase();
+            const val = parseInt(document.getElementById('adm-value').value) || 0;
+            let target = accounts.find(a => a.id.toLowerCase() === nick);
+            if(!target) return alertar("NICK NÃO EXISTE");
+
+            if(type === 'add-click') target.clicks += val;
+            if(type === 'rem-click') target.clicks = Math.max(0, target.clicks - val);
+            if(type === 'add-reb') target.rebirths += val;
+            if(type === 'rem-reb') target.rebirths = Math.max(0, target.rebirths - val);
+            
+            save(); updateUI(); alertar("DADOS ATUALIZADOS");
+        }
+
+        function admStatus(type) {
+            const nick = document.getElementById('adm-target-alt').value.trim().toLowerCase();
+            let target = accounts.find(a => a.id.toLowerCase() === nick);
+            if(!target) return alertar("NICK NÃO EXISTE");
+
+            if(type === 'aura') target.hasAura = true;
+            if(type === 'ban') target.isBanned = Date.now() + 86400000;
+            
+            save(); updateUI(); alertar("STATUS ALTERADO");
+        }
+
+        function addStaff() {
+            const n = document.getElementById('new-staff').value.trim().toLowerCase();
+            if(n && !global.directors.includes(n)) {
+                global.directors.push(n);
+                localStorage.setItem('pxW_Global', JSON.stringify(global));
+                alertar("PROMOVIDO!");
+                updateUI();
+            }
+        }
+
+        function sendMessage() {
+            const inp = document.getElementById('chat-input');
+            const txt = inp.value.trim();
+            if(!txt) return;
+            const isStaff = global.directors.includes(user.id.toLowerCase());
+            chat.push({ user: user.id, msg: txt, staff: isStaff });
+            if(chat.length > 30) chat.shift();
+            inp.value = "";
+            localStorage.setItem('pxW_Chat', JSON.stringify(chat));
+            updateChat();
+        }
+
+        function updateChat() {
+            const localChat = JSON.parse(localStorage.getItem('pxW_Chat')) || [];
+            const div = document.getElementById('messages');
+            div.innerHTML = localChat.map(m => `
+                <div class="msg ${m.staff?'msg-staff':''}">
+                    <b style="color:${m.staff?'var(--admin)':'var(--primary)'}">${m.user}:</b> ${m.msg}
+                </div>
+            `).join('');
+            div.scrollTop = div.scrollHeight;
+        }
+
+        function start2X() {
+            global.eventEnd = Date.now() + 300000;
+            localStorage.setItem('pxW_Global', JSON.stringify(global));
+            checkEvent();
+            alertar("EVENTO 2X ATIVADO!");
+        }
+
+        function checkEvent() {
+            if(Date.now() < global.eventEnd) {
+                eventActive = true;
+                document.getElementById('event-tag').style.display = 'block';
+                setTimeout(() => { eventActive = false; document.getElementById('event-tag').style.display = 'none'; updateUI(); }, global.eventEnd - Date.now());
+            }
+        }
+
+        function clearChat() { chat = []; localStorage.setItem('pxW_Chat', "[]"); updateChat(); }
+        function save() { localStorage.setItem('pxW_DB', JSON.stringify(accounts)); }
+        function alertar(m) {
+            const a = document.getElementById('custom-alert');
+            a.innerText = m; a.classList.add('show');
+            setTimeout(() => a.classList.remove('show'), 3000);
+        }
+        function sair() { localStorage.removeItem('pxW_Sess'); location.reload(); }
+
+        function renderParticles() {
+            const c = document.getElementById('bg-canvas'), ctx = c.getContext('2d');
+            c.width = window.innerWidth; c.height = window.innerHeight;
+            let parts = [];
+            for(let i=0; i<60; i++) parts.push({x: Math.random()*c.width, y: Math.random()*c.height, s: Math.random()*0.5+0.1});
+            function draw() {
+                ctx.clearRect(0,0,c.width,c.height); ctx.fillStyle = "rgba(255,255,255,0.05)";
+                parts.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, 1, 0, Math.PI*2); ctx.fill(); p.y -= p.s; if(p.y<0) p.y=c.height; });
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+    </script>
+</body>
+</html>
+
